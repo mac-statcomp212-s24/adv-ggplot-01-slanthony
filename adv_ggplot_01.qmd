@@ -1,7 +1,7 @@
 ---
 title: "Advanced visualization with ggplot2"
 subtitle: "Challenge 1"
-author: "YOUR NAME"
+author: "Sam Anthony"
 format: 
   html:
     self-contained: true
@@ -45,16 +45,39 @@ You will need to use reference pages and documentation to discover necessary too
 # Setup
 
 ```{r}
-# Code for loading packages and reading in data
+library(tidyverse)
+weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
 
 
 
 # Visualization
 
-```{r}
-# Code for recreating the visualization
-# Use as many code chunks as you need to organize your work well
+```{r, message = FALSE}
+month_starts <- weather %>%
+  filter(Day == 1, Month != 1)
+
+first_days <- month_starts %>% pull(dateInYear)
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(weather) +
+    geom_linerange(aes(x = dateInYear, ymin = RecordLow, ymax = RecordHigh), color = "#ECEBE3", linewidth = 1.5) +
+  geom_linerange(aes(x = dateInYear, ymin = NormalLow, ymax = NormalHigh), color = "#C8B8BA", linewidth = 1.5) +
+  geom_linerange(aes(x = dateInYear, ymin = Low, ymax = High), color = "#A90248", linewidth = 1.5) +
+  geom_vline(data = month_starts, mapping = aes(xintercept = first_days), lty = 'dashed')
+    theme_classic()
+
+    
+    
+ggplot(weather) +
+  geom_line(aes(x = dateInYear, y = CulmPrec), color = "#32a3d8") +
+  #group = Month
+  geom_area(aes(x = dateInYear, y = CulmPrec), fill = "#ebeae2") +
+  #geom_point(aes(x = RecordP, y = RecordPrecip)) +
+  #geom_text(aes(x = , y = , label = RecordText))
+  theme_classic()
 ```
 
 
