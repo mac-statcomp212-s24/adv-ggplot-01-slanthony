@@ -46,6 +46,8 @@ You will need to use reference pages and documentation to discover necessary too
 
 ```{r}
 library(tidyverse)
+library(ggpubr)
+library(cowplot)
 weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
 
@@ -57,27 +59,55 @@ weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.c
 month_starts <- weather %>%
   filter(Day == 1, Month != 1)
 
+month_ends <- weather %>%
+  group_by(Month) %>% 
+  filter(Day == max(Day))
+
+month_abv <- weather %>%
+  group_by(Month) %>% 
+  filter(Day == 15) %>% 
+  pull(dateInYear)
+
 first_days <- month_starts %>% pull(dateInYear)
+
 ```
 
 
 ```{r, message = FALSE, warning = FALSE}
-ggplot(weather) +
+p1 <- ggplot(weather) +
     geom_linerange(aes(x = dateInYear, ymin = RecordLow, ymax = RecordHigh), color = "#ECEBE3", linewidth = 1.5) +
   geom_linerange(aes(x = dateInYear, ymin = NormalLow, ymax = NormalHigh), color = "#C8B8BA", linewidth = 1.5) +
   geom_linerange(aes(x = dateInYear, ymin = Low, ymax = High), color = "#A90248", linewidth = 1.5) +
-  geom_vline(data = month_starts, mapping = aes(xintercept = first_days), lty = 'dashed')
-    theme_classic()
+  geom_vline(data = month_starts, mapping = aes(xintercept = first_days), lty = 'dashed', color = "grey")+
+  scale_y_continuous(breaks = c(0, 40, 80, 120), limits = c(0, 130)) +
+  scale_x_continuous(breaks = month_abv, labels = month.abb, expand = c(0,0))+
+  geom_point(data = weather %>% filter(Record == TRUE), aes(x = dateInYear, y = RecordHigh), shape = 25, color = "black", size = 2) +
+  geom_text(data = weather %>% filter(Record == TRUE), 
+aes(x = dateInYear, y = RecordHigh, label = RecordText),
+vjust = -0.5, hjust = 0.5, color = "black") +
+  labs(subtitle = 'Temperature', x = '', y = '') +
+  ggtitle ("SFO weather in 2011") +
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5), axis.line.x = element_blank())
 
     
     
-ggplot(weather) +
+p2 <- ggplot(weather) +
   geom_line(aes(x = dateInYear, y = CulmPrec), color = "#32a3d8") +
-  #group = Month
   geom_area(aes(x = dateInYear, y = CulmPrec), fill = "#ebeae2") +
-  #geom_point(aes(x = RecordP, y = RecordPrecip)) +
-  #geom_text(aes(x = , y = , label = RecordText))
-  theme_classic()
+  geom_point(data = weather %>% filter(RecordP == TRUE), aes(x = dateInYear, y = CulmPrec), shape = 25, color = "black", size = 2) +
+  geom_text(data = month_ends,
+            aes(x = dateInYear, y = CulmPrec, label = CulmPrec),
+            vjust = -0.5, hjust = 0.5, color = "black") +
+  scale_x_continuous(expand = c(0,0))+
+  geom_vline(data = month_starts, mapping = aes(xintercept = first_days), lty = 'dashed', color = "grey")+
+  labs(subtitle = "Precipitation", y = '', x = '')+
+  theme_classic() +
+  theme(axis.line.x = element_blank())
+
+figure <- ggarrange(p1, p2, ncol = 1, nrow = 2, heights = c(4, 2))
+figure
+
 ```
 
 
